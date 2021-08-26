@@ -1,6 +1,7 @@
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import asymmetric, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.exceptions import InvalidSignature
 
 # https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#signing 
 def sign_bytes(message_str):
@@ -18,7 +19,21 @@ def sign_bytes(message_str):
                 hashes.SHA512()
             )
 
-    public_key_bytes = private_key.public_key().public_bytes(encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo)
+    public_key_bytes = private_key.public_key().public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
 
-    return (public_key_bytes, signed_bytes)
+    return (signed_bytes, public_key_bytes)
+
+def verify_signer(signature, message, publickey_bytes):
+    public_key = serialization.load_pem_public_key(publickey_bytes)
+
+    try:
+        public_key.verify(
+                signature,
+                message,
+                padding.PSS( mgf=padding.MGF1(hashes.SHA512()), salt_length=padding.PSS.MAX_LENGTH ),
+                hashes.SHA512()
+                )
+        return True
+    except InvalidSignature:
+        return False
 

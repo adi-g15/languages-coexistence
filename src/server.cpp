@@ -1,13 +1,15 @@
-#include <zmq.hpp>
-#include <pybind11/embed.h>
-#include <iostream>
-#include <thread>
 #include <chrono>
+#include <filesystem>
+#include <iostream>
+#include <pybind11/embed.h>
+#include <thread>
+#include <zmq.hpp>
 
 #include "actions.hpp"
 #include "payload.pb.h"
 
 namespace py = pybind11;
+namespace fs = std::filesystem;
 
 using namespace std::chrono_literals;
 using std::string;
@@ -35,7 +37,8 @@ auto print_payload(const Payload& payload) {
 
 	cout << "{\n"
 		 << "\taction  : \"" << action_to_string( payload.action() ) << "\"\n"
-		 << "\tmessage : \"" << payload.payload_str() << "\"\n"
+		 << "\tmessage : \"" << payload.original_message() << "\"\n"
+		 << "\tpayload : \"" << payload.payload_str() << "\"\n"
 		 << "\tmetadata: {";
 
 	auto metadata = payload.metadata();
@@ -66,7 +69,7 @@ auto process_request( zmq::message_t& request ) {
 			std::cout << "Received hash is: \"" << payload.payload_str() << '\"' << std::endl;
 			break;
 		case AppliedAction::ENCRYPT: {	// A block is needed in switch-case when initialising creating objects, such as strings vectors
-			auto cipher = payload.payload_str();
+			auto const& cipher = payload.payload_str();
 
 			auto metadata = payload.metadata();
 			auto key = metadata["key"];
@@ -79,8 +82,8 @@ auto process_request( zmq::message_t& request ) {
 			);
 
 			auto plaintext = std::string(
-				(char*)plaintext_bytes.data(),
-				(char*)plaintext_bytes.data() + plaintext_bytes.size()
+				reinterpret_cast<char*>(plaintext_bytes.data()),
+				reinterpret_cast<char*>(plaintext_bytes.data()) + plaintext_bytes.size()
 			);
 
 			plaintext.push_back('\0');
@@ -90,6 +93,54 @@ auto process_request( zmq::message_t& request ) {
 			break;
 		}
 		case AppliedAction::SIGN: {
+			auto signed_bytes = util::hex_string_to_bytes( payload.payload_str() );
+			auto publickey_bytes = util::hex_string_to_bytes( payload.metadata().at("public_key") );
+
+			auto scoped_interpreter = py::scoped_interpreter{};
+
+			                auto python_module_path = "lib";
+	                auto original_dir = std::string(".");   // in case we change working directory, we will revert back with this
+
+	                /* Depending on the current working directory,
+	                 * the file may be present in the root or a directory below or inside a python_lib directory...
+	                 * the simplest use case is running ./build/server instead of ./server with working directory as build/*/
+	                if ( ! fs::exists("lib.py") ) {
+	                        if ( fs::exists("python_lib/lib.py") ) {
+	                                python_module_path = "python_lib.lib";
+        	                } else if ( fs::exists("../python_lib/lib.py") ) {
+                	                std::cerr << "[WARNING] python_lib/lib.rs found in parent directory...\n"
+                        	                     "Changing the working directory to parent directory for importing the python lib" << std::endl;
+
+                                	original_dir = fs::current_path();
+                                	fs::current_path("..");
+                                	python_module_path = "python_lib.lib";
+                        	} else {
+                        	        std::cerr << "[WARNING] lib.py or python_lib/lib.py not found !\n"
+                        	                     "Next import statement MAY FAIL... !\n"
+                         		             "...Bhagwan ka naam lekar aage badh rhe hai !" <<  std::endl;
+                        	}
+                	}
+
+			auto signed_bytes_str = std::string( (char*)signed_bytes.data(), (char*)signed_bytes.data() + signed_bytes.size() );
+			auto publickey_bytes_str = std::string( (char*)publickey_bytes.data(), (char*)publickey_bytes.data() + publickey_bytes.size() );
+
+			auto python_lib = py::module::import( python_module_path );
+			std::cout << std::endl << payload.original_message() << std::endl;
+			auto pyobject = python_lib.attr("verify_signer")(
+				py::bytes(signed_bytes_str),
+				py::bytes(payload.original_message()),
+				py::bytes(publickey_bytes_str)
+				);
+
+			bool verified = pyobject.cast<bool>();
+
+			if ( verified ) {
+				std::cout << "The message was signed by the provided key... Verified" << std::endl;
+			} else {
+				std::cerr << "VERIFICATION FAILED: Message was signed by someone else !!" << std::endl;
+			}
+
+			fs::current_path(original_dir);
 			break;
 		}
 		case AppliedAction::CERTIFICATE: {
@@ -114,7 +165,7 @@ int main () {
 	while(true) {
 		auto request = zmq::message_t{};
 
-		socket.recv(request, zmq::recv_flags::none);
+		auto _ret = socket.recv(request, zmq::recv_flags::none);
 		process_request(request);
 
 		socket.send(zmq::buffer(std::string("Received OK (200)")), zmq::send_flags::none);

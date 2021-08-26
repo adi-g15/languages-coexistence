@@ -11,6 +11,7 @@ enum AppliedAction {
 message Payload {
 	optional AppliedAction action = 1;
 	optional string payload_str = 2;
-	map<string,string> metadata = 3;	// Additional data
+	optional string original_message = 3;
+	map<string,string> metadata = 4;	// Additional data
 }
 

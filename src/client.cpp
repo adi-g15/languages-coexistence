@@ -1,13 +1,13 @@
+#include <algorithm>
 #include <argparse.hpp>
-#include <pybind11/embed.h>
 #include <cstdint>
+#include <filesystem>
+#include <iostream>
+#include <pybind11/embed.h>
 #include <stdexcept>
+#include <string>
 #include <vector>
 #include <zmq.hpp>
-#include <iostream>
-#include <string>
-#include <algorithm>
-#include <filesystem>
 
 #include "actions.hpp"
 #include "payload.pb.h"
@@ -26,6 +26,7 @@ string to_lower_case(string&& str) {
 
 string encode_payload( const string &action, const string& msg ) {
 	auto payload = Payload();
+	payload.set_original_message(msg);
 	
 	if ( action == "encode" ) {
 		payload.set_action(AppliedAction::ENCODE);
