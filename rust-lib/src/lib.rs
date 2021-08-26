@@ -24,14 +24,10 @@ pub extern "C" fn get_hash(data: *const c_char, hash_buffer: *mut u8) -> size_t 
 }
 
 #[no_mangle]
-pub extern "C" fn sign_str(data: *const c_char, signed_msg_buffer: *mut c_char, public_key_buffer: *mut c_char) -> size_t { // Returns msg_buffer size, PREVIOUSLY: (Signed_Data, Signer_public_key)
+#[deprecated]
+pub extern "C" fn sign_str(_data: *const c_char, _signed_msg_buffer: *mut c_char, _public_key_buffer: *mut c_char) -> size_t { // Returns msg_buffer size, PREVIOUSLY: (Signed_Data, Signer_public_key)
     
-    if data.is_null() { return 0; }
+    unimplemented!();
 
-    let data_str: &CStr = unsafe {
-        CStr::from_ptr(data)
-    };
-
-    0
 }
 

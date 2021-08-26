@@ -14,12 +14,18 @@ CPMAddPackage(
 	VERSION 4.7.1
 	OPTIONS "CPPZMQ_BUILD_TESTS NO"
 	)
+CPMAddPackage("gh:pybind/pybind11@2.7.1")
 
 add_executable(client "src/client.cpp")
 add_executable(server "src/server.cpp")
 
+# Link argparse
 target_link_libraries(client argparse)
-target_link_libraries(server argparse)
+
+# Prepare pybind and python files
+file(COPY "python_lib/lib.py" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(client argparse pybind11::embed)
+target_link_libraries(server argparse pybind11::embed)
 
 add_subdirectory(rust-lib)
 

@@ -1,13 +1,19 @@
-#include "argparse.hpp"
+#include <argparse.hpp>
+#include <pybind11/embed.h>
 #include <cstdint>
 #include <stdexcept>
+#include <vector>
 #include <zmq.hpp>
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <filesystem>
 
 #include "actions.hpp"
 #include "payload.pb.h"
+
+namespace py = pybind11;
+namespace fs = std::filesystem;
 
 using std::string;
 
@@ -35,8 +41,53 @@ string encode_payload( const string &action, const string& msg ) {
 	} else if ( action == "sign" ) {
 		payload.set_action(AppliedAction::SIGN);
 
-		auto str = message::sign(msg);
-		payload.set_payload_str(str);
+		py::scoped_interpreter scoped_interpreter{};
+
+		auto python_module_path = "lib";
+		auto original_dir = std::string(".");	// in case we change working directory, we will revert back with this
+
+		/* Depending on the current working directory,
+		 * the file may be present in the root or a directory below or inside a python_lib directory...
+		 * the simplest use case is running ./build/server instead of ./server with working directory as build/*/
+		if ( ! fs::exists("lib.py") ) {
+			if ( fs::exists("python_lib/lib.py") ) {
+				python_module_path = "python_lib.lib";
+			} else if ( fs::exists("../python_lib/lib.py") ) {
+				std::cerr << "[WARNING] python_lib/lib.rs found in parent directory...\n"
+					     "Changing the working directory to parent directory for importing the python lib" << std::endl;
+
+				original_dir = fs::current_path();
+				fs::current_path("..");
+				python_module_path = "python_lib.lib";
+			} else {
+				std::cerr << "[WARNING] lib.py or python_lib/lib.py not found !\n"
+					     "Next import statement MAY FAIL... !\n"
+					     "...Bhagwan ka naam lekar aage badh rhe hai !" <<  std::endl;
+			}
+		}
+
+		auto python_lib = py::module::import(python_module_path);
+		auto pyobject = python_lib.attr("sign_bytes")(py::cast(msg));
+
+		// Intentionally not handling exceptions... to keep it simple plus it's a client will just fail, and will neverthless run each time again
+		auto pair = pyobject.cast<py::tuple>();
+		auto signed_bytes = pair[0].cast<py::bytes>();	// bytes; format used when signing: utf-8
+		auto public_key = pair[1].cast<py::bytes>();	// bytes; encoding: DER, format: SubjectPublicKeyInfo
+
+		auto cstr_signed_bytes = signed_bytes.cast<std::string>();
+		auto cstr_publickey_bytes = public_key.cast<std::string>();
+
+		auto hexstring_signed_bytes = util::bytes_to_hex_string(
+			std::vector<uint8_t>( (uint8_t*)cstr_signed_bytes.data(), (uint8_t*)cstr_signed_bytes.data() + cstr_signed_bytes.size() )
+			);
+		auto hexstring_publickey_bytes = util::bytes_to_hex_string(
+			std::vector<uint8_t>( (uint8_t*)cstr_publickey_bytes.data(), (uint8_t*)cstr_publickey_bytes.data() + cstr_publickey_bytes.size() )
+			);
+
+		payload.set_payload_str(hexstring_signed_bytes);
+		payload.mutable_metadata()->insert({"public_key", hexstring_publickey_bytes});
+
+		fs::current_path(original_dir);
 	} else if ( action == "encrypt" ) {
 		payload.set_action(AppliedAction::ENCRYPT);
 
@@ -85,5 +136,6 @@ int main (int argc, const char *argv[]) {
 
 	auto payload = encode_payload(action, message);
 
+	std::clog << "Sending payload..." << std::endl;
 	socket.send(zmq::buffer(payload), zmq::send_flags::none);
 }

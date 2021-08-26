@@ -1,10 +1,13 @@
 #include <zmq.hpp>
+#include <pybind11/embed.h>
 #include <iostream>
 #include <thread>
 #include <chrono>
 
 #include "actions.hpp"
 #include "payload.pb.h"
+
+namespace py = pybind11;
 
 using namespace std::chrono_literals;
 using std::string;
@@ -86,10 +89,12 @@ auto process_request( zmq::message_t& request ) {
 					  << plaintext << "\"\n";
 			break;
 		}
-		case AppliedAction::SIGN:
+		case AppliedAction::SIGN: {
 			break;
-		case AppliedAction::CERTIFICATE:
+		}
+		case AppliedAction::CERTIFICATE: {
 			break;
+		}
 		default:
 			std::cerr << "Action not known !\n";
 			std::cerr << request.to_string();
