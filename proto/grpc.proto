@@ -2,11 +2,16 @@ syntax = "proto3";
 
 import "payload.proto";
 
+message CertificatePayload {
+	string TODO = 1;
+}
+
 message Certificate {
-	optional string TODO = 1;
+	string TODO = 1;
 }
 
 service gRPC_service {
-	rpc getCertificate(Payload) returns (Certificate) {};
+	rpc getCertificate(CertificatePayload) returns (Certificate) {};
+	//rpc getDigitalSignature(bytes) returns (SignatureResponse) {};
 }
 

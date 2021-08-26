@@ -4,14 +4,14 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature
 
 # https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#signing 
-def sign_bytes(message_str):
+def sign_bytes(message_bytes):
     private_key = asymmetric.rsa.generate_private_key(
                 public_exponent=65537,
                 key_size=4096       # 1024 and below are considered breakable now :(
             )
 
     signed_bytes = private_key.sign(
-            bytes(message_str, "utf-8"),
+            message_bytes,
             padding.PSS(
                     mgf=padding.MGF1(hashes.SHA512()),
                     salt_length=padding.PSS.MAX_LENGTH
@@ -23,13 +23,13 @@ def sign_bytes(message_str):
 
     return (signed_bytes, public_key_bytes)
 
-def verify_signer(signature, message, publickey_bytes):
+def verify_signer(signature, message_bytes, publickey_bytes):
     public_key = serialization.load_pem_public_key(publickey_bytes)
 
     try:
         public_key.verify(
                 signature,
-                message,
+                message_bytes,
                 padding.PSS( mgf=padding.MGF1(hashes.SHA512()), salt_length=padding.PSS.MAX_LENGTH ),
                 hashes.SHA512()
                 )

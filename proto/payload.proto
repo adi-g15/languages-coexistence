@@ -4,14 +4,15 @@ enum AppliedAction {
 	ENCODE=0;
 	HASH=1;
 	SIGN=2;
-	ENCRYPT=3;
-	CERTIFICATE=4;
+	ENCRYPT_ASYMMETRIC=3;
+	ENCRYPT_SYMMETRIC=4;
+	CERTIFICATE=5;
 }
 
 message Payload {
-	optional AppliedAction action = 1;
-	optional string payload_str = 2;
-	optional string original_message = 3;
+	AppliedAction action = 1;
+	string payload_str = 2;
+	string original_message = 3;
 	map<string,string> metadata = 4;	// Additional data
 }
 

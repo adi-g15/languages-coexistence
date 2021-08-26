@@ -14,13 +14,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Create Build Environment
-        run: cmake -E make_directory ${{github.workspace}}/build
 
       - name: Install dependencies
-        run: pacman -Sy git openssl protobuf zeromq cmake pkg-config --noconfirm
+        run: pacman -Sy git python openssl protobuf zeromq cmake pkg-config --noconfirm
 
       - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+      - name: Create Build Environment
+        run: cmake -E make_directory ${{github.workspace}}/build
 
       - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable

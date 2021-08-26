@@ -21,8 +21,10 @@ string action_to_string(const AppliedAction action) {
 			return "AppliedAction::ENCODE";
 		case AppliedAction::HASH:
 			return "AppliedAction::HASH";
-		case AppliedAction::ENCRYPT:
-			return "AppliedAction::ENCRYPT";
+		case AppliedAction::ENCRYPT_ASYMMETRIC:
+			return "AppliedAction::ENCRYPT_SYMMETRIC";
+		case AppliedAction::ENCRYPT_SYMMETRIC:
+			return "AppliedAction::ENCRYPT_ASYMMETRIC";
 		case AppliedAction::SIGN:
 			return "AppliedAction::SIGN";
 		case AppliedAction::CERTIFICATE:
@@ -68,7 +70,7 @@ auto process_request( zmq::message_t& request ) {
 		case AppliedAction::HASH:
 			std::cout << "Received hash is: \"" << payload.payload_str() << '\"' << std::endl;
 			break;
-		case AppliedAction::ENCRYPT: {	// A block is needed in switch-case when initialising creating objects, such as strings vectors
+		case AppliedAction::ENCRYPT_SYMMETRIC: {	// A block is needed in switch-case when initialising creating objects, such as strings vectors
 			auto const& cipher = payload.payload_str();
 
 			auto metadata = payload.metadata();
@@ -92,7 +94,7 @@ auto process_request( zmq::message_t& request ) {
 					  << plaintext << "\"\n";
 			break;
 		}
-		case AppliedAction::SIGN: {
+		case AppliedAction::ENCRYPT_ASYMMETRIC: {
 			auto signed_bytes = util::hex_string_to_bytes( payload.payload_str() );
 			auto publickey_bytes = util::hex_string_to_bytes( payload.metadata().at("public_key") );
 

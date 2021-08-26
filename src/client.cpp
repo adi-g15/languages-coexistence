@@ -15,6 +15,10 @@
 namespace py = pybind11;
 namespace fs = std::filesystem;
 
+constexpr const char* PYTHON_SERVER_FLASK = "http://localhost:5000/";
+constexpr const char* CPP_SERVER_ZMQ = "tcp://localhost:15035";
+constexpr const char* JAVASCRIPT_SERVER_GRPC = "rpc://localhost:3000";
+
 using std::string;
 
 string to_lower_case(string&& str) {
@@ -39,8 +43,8 @@ string encode_payload( const string &action, const string& msg ) {
 
 		auto str = message::hash(msg);
 		payload.set_payload_str(str);
-	} else if ( action == "sign" ) {
-		payload.set_action(AppliedAction::SIGN);
+	} else if ( action == "encrypt" ) {
+		payload.set_action(AppliedAction::ENCRYPT_ASYMMETRIC);
 
 		py::scoped_interpreter scoped_interpreter{};
 
@@ -68,7 +72,7 @@ string encode_payload( const string &action, const string& msg ) {
 		}
 
 		auto python_lib = py::module::import(python_module_path);
-		auto pyobject = python_lib.attr("sign_bytes")(py::cast(msg));
+		auto pyobject = python_lib.attr("sign_bytes")(py::bytes(msg));
 
 		// Intentionally not handling exceptions... to keep it simple plus it's a client will just fail, and will neverthless run each time again
 		auto pair = pyobject.cast<py::tuple>();
@@ -89,8 +93,8 @@ string encode_payload( const string &action, const string& msg ) {
 		payload.mutable_metadata()->insert({"public_key", hexstring_publickey_bytes});
 
 		fs::current_path(original_dir);
-	} else if ( action == "encrypt" ) {
-		payload.set_action(AppliedAction::ENCRYPT);
+	} else if ( action == "encrypt_symmetric" ) {
+		payload.set_action(AppliedAction::ENCRYPT_SYMMETRIC);
 
 		auto encrypted_bytes = message::encrypt_bytes({
 			reinterpret_cast<const uint8_t*>(msg.data()),
@@ -102,6 +106,8 @@ string encode_payload( const string &action, const string& msg ) {
 			{"key", util::bytes_to_hex_string(encrypted_bytes.key )},
 			{"iv", util::bytes_to_hex_string(encrypted_bytes.IV) }
 		});
+	} else if ( action == "sign" ) {
+		// TODO: Use API call to get Digital Signature from python server
 	} else throw std::runtime_error("No Such Action !");
 
 	return payload.SerializeAsString();
@@ -112,7 +118,7 @@ int main (int argc, const char *argv[]) {
 	argparse::ArgumentParser program("client");
 
 	program.add_argument("action")
-		.help("Chose action among: encode, hash, sign, encrypt");
+		.help("Chose action among: encode, hash, sign, encrypt (default assymmetric), encrypt_symmetric");
 
 	program.add_argument("message")
 		.help("The message data (a string, can pipe a file)");
@@ -133,7 +139,7 @@ int main (int argc, const char *argv[]) {
 	/*This is a req (request) socket*/
 	auto socket = zmq::socket_t{context, zmq::socket_type::req};
 
-	socket.connect("tcp://localhost:15035");
+	socket.connect( CPP_SERVER_ZMQ );
 
 	auto payload = encode_payload(action, message);
 

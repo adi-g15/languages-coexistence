@@ -202,16 +202,5 @@ namespace message {
 
 		return util::bytes_to_hex_string({hash_buffer, hash_buffer+64});
 	}
-
-	std::string sign(const std::string& str) {
-		// TODO: I don't know the sizes required
-		char public_key_buffer[128];
-		std::vector<char> signed_msg(str.size() * 2 + 1);	// allocating 2*length + 1 size for the signature
-
-		auto signed_msg_len = sign_str(str.data(), signed_msg.data(), public_key_buffer);
-		signed_msg.resize(signed_msg_len);
-
-		return util::bytes_to_hex_string({signed_msg.begin(),signed_msg.end()});
-	}
 }
 
