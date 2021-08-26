@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 
 project(encryption_n_more)
 
@@ -57,14 +57,13 @@ target_link_libraries(server ${PROTOBUF_LIBRARIES})
 find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 find_package(Threads REQUIRED)
 
-target_link_libraries(client Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq rust-lib)
 # dlsym symbol not found error, remove this if it fails to find dl (libdl is provided by the GNU C library glibc)
-if (UNIX)
-	target_link_libraries(client dl)
-	target_link_libraries(server dl)
-endif()
+target_link_libraries(client Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq rust-lib ${CMAKE_DL_LIBS})
+target_link_libraries(server Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq rust-lib ${CMAKE_DL_LIBS})
 
-target_link_libraries(server Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq rust-lib)
+message("TIP: IF THERE IS LINKER ERROR FOR ssl AND crypto SYMBOLS, INCLUDE THESE ON LINUX, BUT \"\"\"REMOVE FROM WINDOWS\"\"\"...")
+target_link_libraries(client ssl crypto)
+target_link_libraries(server ssl crypto)
 
 # Extras...
 include(CheckCXXCompilerFlag)

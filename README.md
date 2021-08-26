@@ -1,6 +1,14 @@
 # Crypto... Testbed
 
-A C++ Application, doing these things... with a lot of tech.
+Coexistence of C++, Rust, JavaScript and Python.
+And multiple ways of calling functions from different languages:
+
+* C++ <-> Rust : FFI (using cbindgen)
+* C++ <-> C++  : ZeroMQ (networking; client-server)
+* C++ -> Python : FFI (using pybind11)
+* C++ <-> JavaScript : gRPC (networking; server-server (the C++ server contacting gRPC server so then a client actually))
+
+> CMake builds Cargo (Not exactly a language, but this was new for me, using a CMake script to build rust code triggered by CMake)
 
 Run `client --help` for help.
 
@@ -24,7 +32,13 @@ Some things I have done before, but those that add a cherry on top of the cake
 
 ## Building
 
-Firstly install `openssl (`openssl` in apt) and protobuf (`protocol-compiler` in apt)
+Since it uses a variety of tech... you may expect some dependencies, though for most developers you must have installed these sometime
+
+Firstly install openssl, protobuf, zeromq (`libssl-dev`, `protobuf-compiler`, `libzmq3-dev` in apt)
+
+> NOTE: On debian systems atleast, you must install `pkg-config` too, it's required by CMake to search OpenSSL
+
+> Considering you have `python3` (with python3-distutils, python3-dev), `cargo` (rust), and `nodejs` (javascript)... 
 
 ```sh
 cmake -B build
