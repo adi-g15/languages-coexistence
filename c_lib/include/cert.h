@@ -1,8 +1,8 @@
 #include <string.h>
 
-struct CString {
-    const char* str;
+struct CBytes {
+    const unsigned char* bytes;
     int len;
 };
 
-struct CString get_certificate(const char* name/*, const char* email_id*/);
+struct CBytes get_certificate(/*const char* name, const char* email_id*/);
