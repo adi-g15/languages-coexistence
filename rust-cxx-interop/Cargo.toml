@@ -1,0 +1,17 @@
+[package]
+name = "rust-cxx-interop"
+version = "0.1.0"
+authors = ["Aditya Gupta <adityag.ug19.cs@nitp.ac.in>"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+cxx = "1.0.53"
+openssl = "0.10.36"
+reqwest = { version = "0.11.4", features = ["blocking"] }
+
+[build-dependencies]
+cxx-build = "1.0.53"
+

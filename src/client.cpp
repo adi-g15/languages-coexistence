@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <argparse.hpp>
+#include <cppcodec/base64_rfc4648.hpp>
 #include <cstdint>
 #include <filesystem>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <pybind11/embed.h>
 #include <stdexcept>
 #include <string>
@@ -11,6 +13,9 @@
 
 #include "actions.hpp"
 #include "payload.pb.h"
+#include "rust_cxx_interop.h"
+
+/*Programming with libcurlpp - https://raw.githubusercontent.com/jpbarrette/curlpp/master/doc/guide.pdf*/
 
 namespace py = pybind11;
 namespace fs = std::filesystem;
@@ -107,6 +112,15 @@ string encode_payload( const string &action, const string& msg ) {
 			{"iv", util::bytes_to_hex_string(encrypted_bytes.IV) }
 		});
 	} else if ( action == "sign" ) {
+		payload.set_action(AppliedAction::SIGN);
+
+		nlohmann::json j;
+		j["message_bytes"] = // COME HERE
+
+		rust_ffi::post_request(
+			rust::String(std::string(PYTHON_SERVER_FLASK) + "digital_signature"),
+			rust::String()
+			);
 		// TODO: Use API call to get Digital Signature from python server
 	} else throw std::runtime_error("No Such Action !");
 

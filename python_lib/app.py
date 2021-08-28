@@ -23,7 +23,7 @@ A REST API responding with JSON object is basically just return a JSON string...
 @request body - JSON - {message_bytes: "base64 encoded string"}
 @return {signature,public_key}
 """
-@app.route("/digital_signature", methods=['GET'])
+@app.route("/digital_signature", methods=['POST'])
 def get_digital_signature():
     body = parse_body(request)
 
@@ -49,10 +49,10 @@ def verify_signature():
     signature = base64.b64decode( body["signature_bytes"] )
     public_key = base64.b64decode( body["public_key_bytes"] )
 
-    message_hash = hashlib.sha512( message_bytes ).hexdigest();
+    message_hash = hashlib.sha512( message_bytes ).hexdigest()
 
     # Returning status codes: http://stackoverflow.com/questions/7824101/ddg#7824605
-    if lib.verify_signer(signature, bytes(message_hash), public_key):
+    if lib.verify_signer(signature, bytes(message_hash), public_key) == True:
         return "{\"verified\": \"true\"}", 202
     else:
         return "", 400

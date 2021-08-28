@@ -22,9 +22,9 @@ string action_to_string(const AppliedAction action) {
 		case AppliedAction::HASH:
 			return "AppliedAction::HASH";
 		case AppliedAction::ENCRYPT_ASYMMETRIC:
-			return "AppliedAction::ENCRYPT_SYMMETRIC";
-		case AppliedAction::ENCRYPT_SYMMETRIC:
 			return "AppliedAction::ENCRYPT_ASYMMETRIC";
+		case AppliedAction::ENCRYPT_SYMMETRIC:
+			return "AppliedAction::ENCRYPT_SYMMETRIC";
 		case AppliedAction::SIGN:
 			return "AppliedAction::SIGN";
 		case AppliedAction::CERTIFICATE:
@@ -168,6 +168,7 @@ int main () {
 		auto request = zmq::message_t{};
 
 		auto _ret = socket.recv(request, zmq::recv_flags::none);
+		std::cout << "\n- - - - - - - - - - - - - - - - - - - - -" << std::endl;
 		process_request(request);
 
 		socket.send(zmq::buffer(std::string("Received OK (200)")), zmq::send_flags::none);

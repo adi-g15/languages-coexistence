@@ -6,35 +6,66 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-include(CMakeCargo)
 
-enable_language(Rust)
+# Dropped CMakeCargo
+cmake_policy(SET CMP0097 NEW)	# Do not update/init submodules when GIT_SUBMODULE = "" in ExternalProject_Add
 
 include(CPM)
 CPMAddPackage("gh:p-ranav/argparse@2.1")
 CPMAddPackage(
 	GITHUB_REPOSITORY zeromq/cppzmq
 	VERSION 4.7.1
-	OPTIONS "CPPZMQ_BUILD_TESTS NO"
+	GIT_SUBMODULES ""
+	GIT_SUBMODULES_RECURSE OFF
+	OPTIONS "CPPZMQ_BUILD_TESTS OFF"
 	)
 CPMAddPackage("gh:pybind/pybind11@2.7.1")
-CPMAddPackage("gh:jpbarrette/curlpp@0.8.1")
+CPMAddPackage(
+	GITHUB_REPOSITORY nlohmann/json
+	VERSION 3.10.1
+	GIT_SUBMODULES_RECURSE OFF
+	GIT_SUBMODULES ""
+	OPTIONS "JSON_BuildTests OFF"
+	)
+CPMAddPackage(
+	GITHUB_REPOSITORY adi-g15/cppcodec
+	VERSION 0.3
+	GIT_SUBMODULES ""
+	)
 
 add_executable(client "src/client.cpp")
 add_executable(server "src/server.cpp")
 
 # Link argparse
-target_link_libraries(client argparse)
+target_link_libraries(client argparse cppcodec)
 
 # Prepare pybind and python files
 file(COPY "python_lib/lib.py" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(client argparse pybind11::embed curlpp)
-target_link_libraries(server argparse pybind11::embed curlpp)
+target_link_libraries(client argparse pybind11::embed nlohmann_json)
+target_link_libraries(server argparse pybind11::embed nlohmann_json)
 
-add_subdirectory(rust-lib)
+# https://github.com/XiangpengHao/cxx-cmake-example
+option(ENABLE_LTO "Enable cross language linking time optimization" ON)	# When available, use LTO, it almost nulls the 'huge' overhead of FFI between these (see https://github.com/XiangpengHao/cxx-cmake-example for metrics)
 
-include_directories("include")
-include_directories("rust-lib")
+if(ENABLE_LTO)
+	include(CheckIPOSupported)
+	check_ipo_supported(RESULT supported OUTPUT error)
+	if(supported)
+		message(STATUS "IPO / LTO enabled")
+		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+		add_link_options(-fuse-ld=lld)
+	else()
+		message(STATUS "IPO / LTO not supported: <${error}>")
+	endif()
+endif()
+
+add_subdirectory(rust-cxx-interop)
+
+include_directories(${CMAKE_BINARY_DIR}/rust-cxx-interop)
+include_directories(include)
+
+target_link_libraries(client rust_cxx_interop)
+target_link_libraries(server rust_cxx_interop)
 
 # These additional dependencies need to be linked for the C library or something... or atleast this CMake-Rust to work
 if (WIN32)
@@ -59,14 +90,14 @@ find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 find_package(Threads REQUIRED)
 
 # dlsym symbol not found error, remove this if it fails to find dl (libdl is provided by the GNU C library glibc)
-target_link_libraries(client Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq rust-lib ${CMAKE_DL_LIBS})
-target_link_libraries(server Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq rust-lib ${CMAKE_DL_LIBS})
+target_link_libraries(client Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq ${CMAKE_DL_LIBS})
+target_link_libraries(server Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq ${CMAKE_DL_LIBS})
 
 message("TIP: IF THERE IS LINKER ERROR FOR ssl AND crypto SYMBOLS, INCLUDE THESE ON LINUX, BUT \"\"\"REMOVE FROM WINDOWS\"\"\"...")
 target_link_libraries(client ssl crypto)
 target_link_libraries(server ssl crypto)
 
-# Extras...
+# Extras... https://stackanswers.net/questions/best-way-to-portably-set-compiler-options-like-wall-and-pedantic-in-cmake
 include(CheckCXXCompilerFlag)
 
 function(enable_cxx_compiler_flag_if_supported flag)

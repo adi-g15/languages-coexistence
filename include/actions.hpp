@@ -16,7 +16,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
-#include "rust-ffi.h"
+#include "rust_cxx_interop.h"
 
 namespace util {
 	std::vector<uint8_t> get_random_bytes(int n) {
@@ -196,11 +196,13 @@ namespace message {
 		return decrypted;
 	}
 
+	// This uses the FFI... it doesn't look much different, due to `cxx` crate, previously with cbindgen it seemed more like FFI, with all C pointers and buffers...
 	std::string hash(const std::string& str) {
-		uint8_t hash_buffer[64];
-		get_hash(str.data(), hash_buffer);
+		auto hash = rust_ffi::get_msg_hash( rust::String( str ) );
 
-		return util::bytes_to_hex_string({hash_buffer, hash_buffer+64});
+		return util::bytes_to_hex_string(
+			std::vector<uint8_t>( hash.begin(), hash.end() )
+			);
 	}
 }
 

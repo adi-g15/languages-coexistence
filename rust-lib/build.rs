@@ -8,4 +8,6 @@ fn main() {
         .generate()
         .expect("Couldn't generate C bindings")
         .write_to_file("rust-ffi.h");
+
+    println!("cargo-rerun-if-changed=src/lib.rs");
 }

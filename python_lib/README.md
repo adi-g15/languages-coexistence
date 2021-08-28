@@ -6,6 +6,14 @@
 
 * main.py - Flask server, this is a basic server that listens for HTTP requests... and all internal working using the lib.py functions
 
+## Starting the server
+
+```sh
+pip3 install pipenv
+pipenv install
+pipenv run flask run
+```
+
 ## pipenv
 
 > Here it's suggested to use pipenv for projects: https://packaging.python.org/tutorials/managing-dependencies/
