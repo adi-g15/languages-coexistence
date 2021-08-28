@@ -200,9 +200,7 @@ namespace message {
 	std::string hash(const std::string& str) {
 		auto hash = rust_ffi::get_msg_hash( rust::String( str ) );
 
-		return util::bytes_to_hex_string(
-			std::vector<uint8_t>( hash.begin(), hash.end() )
-			);
+		return std::string( hash.begin(), hash.end() );
 	}
 }
 

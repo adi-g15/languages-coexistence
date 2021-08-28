@@ -10,6 +10,7 @@ crate-type = ["staticlib"]
 [dependencies]
 cxx = "1.0.53"
 openssl = "0.10.36"
+hex = "0.4.3"
 reqwest = { version = "0.11.4", features = ["blocking"] }
 
 [build-dependencies]

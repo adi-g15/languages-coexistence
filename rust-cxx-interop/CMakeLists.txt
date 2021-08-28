@@ -1,10 +1,10 @@
 # https://github.com/XiangpengHao/cxx-cmake-example/blob/master/rust_part/CMakeLists.txt
-if ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
-	set(CARGO_CMD cargo build --verbose)
-	set(TARGET_DIR "debug")
-else()
+if ( CMAKE_BUILD_TYPE STREQUAL "Release" )
 	set(CARGO_CMD cargo build --release --verbose)
 	set(TARGET_DIR "release")
+else()
+	set(CARGO_CMD cargo build --verbose)
+	set(TARGET_DIR "debug")
 endif()
 
 if(ENABLE_LTO)
@@ -26,5 +26,4 @@ add_custom_command(
 
 add_library(rust_cxx_interop STATIC ${RUST_CXX_INTEROP_CXX})
 find_package(Threads REQUIRED)
-target_link_libraries(rust_cxx_interop Threads::Threads ${CMAKE_DL_LIBS} ${RUST_CXX_INTEROP_LIB})
-
+target_link_libraries(rust_cxx_interop Threads::Threads ${CMAKE_DL_LIBS})

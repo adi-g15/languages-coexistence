@@ -6,11 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+include(CPM)
 
 # Dropped CMakeCargo
 cmake_policy(SET CMP0097 NEW)	# Do not update/init submodules when GIT_SUBMODULE = "" in ExternalProject_Add
 
-include(CPM)
 CPMAddPackage("gh:p-ranav/argparse@2.1")
 CPMAddPackage(
 	GITHUB_REPOSITORY zeromq/cppzmq
@@ -20,18 +20,8 @@ CPMAddPackage(
 	OPTIONS "CPPZMQ_BUILD_TESTS OFF"
 	)
 CPMAddPackage("gh:pybind/pybind11@2.7.1")
-CPMAddPackage(
-	GITHUB_REPOSITORY nlohmann/json
-	VERSION 3.10.1
-	GIT_SUBMODULES_RECURSE OFF
-	GIT_SUBMODULES ""
-	OPTIONS "JSON_BuildTests OFF"
-	)
-CPMAddPackage(
-	GITHUB_REPOSITORY adi-g15/cppcodec
-	VERSION 0.3
-	GIT_SUBMODULES ""
-	)
+CPMAddPackage("gh:fmtlib/fmt#8.0.1")
+CPMAddPackage("gh:adi-g15/cppcodec@0.3")
 
 add_executable(client "src/client.cpp")
 add_executable(server "src/server.cpp")
@@ -41,8 +31,8 @@ target_link_libraries(client argparse cppcodec)
 
 # Prepare pybind and python files
 file(COPY "python_lib/lib.py" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(client argparse pybind11::embed nlohmann_json)
-target_link_libraries(server argparse pybind11::embed nlohmann_json)
+target_link_libraries(client argparse pybind11::embed fmt)
+target_link_libraries(server argparse pybind11::embed)
 
 # https://github.com/XiangpengHao/cxx-cmake-example
 option(ENABLE_LTO "Enable cross language linking time optimization" ON)	# When available, use LTO, it almost nulls the 'huge' overhead of FFI between these (see https://github.com/XiangpengHao/cxx-cmake-example for metrics)
@@ -59,13 +49,15 @@ if(ENABLE_LTO)
 	endif()
 endif()
 
+add_subdirectory(c_lib)
 add_subdirectory(rust-cxx-interop)
 
+message("Cmake build type is ${CMAKE_BUILD_TYPE}")
 include_directories(${CMAKE_BINARY_DIR}/rust-cxx-interop)
 include_directories(include)
 
-target_link_libraries(client rust_cxx_interop)
-target_link_libraries(server rust_cxx_interop)
+target_link_libraries(client c_lib_cert rust_cxx_interop)
+target_link_libraries(server c_lib_cert rust_cxx_interop)
 
 # These additional dependencies need to be linked for the C library or something... or atleast this CMake-Rust to work
 if (WIN32)

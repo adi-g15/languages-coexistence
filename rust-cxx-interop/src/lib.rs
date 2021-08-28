@@ -4,13 +4,15 @@ use reqwest::blocking;
 mod ffi {
     #[namespace = "rust_ffi"]
     extern "Rust" {
-       fn get_msg_hash(message: &String) -> Vec<u8>;
+       fn get_msg_hash(message: &String) -> String;
        fn post_request(request_url: &String, body: &String) -> String; // Vec<[String;2]>)
     }
 }
 
-pub fn get_msg_hash(message: &String) -> Vec<u8> {
-    openssl::sha::sha512(message.as_bytes()).to_vec()
+pub fn get_msg_hash(message: &String) -> String {
+    hex::encode(
+        openssl::sha::sha512(message.as_bytes())
+    )[0..6].to_string()
 }
 
 pub fn post_request(request_url: &String, body: &String) -> String {
