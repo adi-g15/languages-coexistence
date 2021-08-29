@@ -13,6 +13,7 @@
 #include <zmq.hpp>
 
 #include "actions.hpp"
+#include "grpc.pb.h"
 #include "payload.pb.h"
 #include "rust_cxx_interop.h"
 
@@ -139,8 +140,9 @@ string encode_payload( const string &action, const string& msg ) {
 		payload.set_action(AppliedAction::CERTIFICATE);
 
 		/*Try with gRPC, if request times out or fails, try calling the C function*/
+		// grpc::CreateChannel(JAVASCRIPT_SERVER_GRPC, grpc::InsecureChannelCredentials());
 
-		auto cert = get_certificate(msg.data());
+		auto cert = get_certificate(/*msg.data()*/);
 
 	} else throw std::runtime_error("No Such Action !");
 

@@ -10,7 +10,7 @@ message Certificate {
 	string TODO = 1;
 }
 
-service gRPC_service {
+service grpc_service {
 	rpc getCertificate(CertificatePayload) returns (Certificate) {};
 	//rpc getDigitalSignature(bytes) returns (SignatureResponse) {};
 }
