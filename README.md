@@ -6,13 +6,17 @@
   <a href="https://github.com/adi-g15/crypto-testbed/actions/workflows/cmake.yml"><imt src="https://github.com/adi-g15/crypto-testbed/actions/workflows/cmake.yml/badge.svg"/></a>
 </div>
 
+> NOTE: It is INTENTIONALLY using so much for such a single thing, since I wanted to try how they work together
+
 Coexistence of C++, Rust, JavaScript and Python.
 And multiple ways of calling functions from different languages:
 
+* C -> C (calling your parents isn't tough right ❤️)
 * C++ <-> Rust : FFI (using cbindgen)
+* Rust -> Python : REST (HTTP requests)
 * C++ <-> C++  : ZeroMQ (networking; client-server)
 * C++ -> Python : FFI (using pybind11)
-* C++ <-> JavaScript : gRPC (networking; server-server (the C++ server contacting gRPC server so then a client actually))
+* C++ <-> JavaScript : gRPC (INCOMPLETE; networking; server-server (the C++ server contacting gRPC server so then a client actually))
 
 > CMake builds Cargo (Not exactly a language, but this was new for me, using a CMake script to build rust code triggered by CMake)
 
