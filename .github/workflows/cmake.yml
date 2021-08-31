@@ -1,7 +1,10 @@
 # The ubuntu and windows workflows were in single file, separating for independent build status batches
 name: CMake
 
-on: [push]
+on:
+  push:
+  schedule:
+    - cron: "0 0 * * sun"
 
 env:
   BUILD_TYPE: Debug
@@ -14,22 +17,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: hecrj/setup-rust-action@v1.3.4  # Install cargo and rustc
-        with:
-          rust-version: stable
 
       - name: Install dependencies
-        run: pacman -Sy git python openssl protobuf zeromq cmake pkg-config curl --noconfirm
+        run: pacman -Sy git clang lld python openssl protobuf zeromq cmake pkg-config curl --noconfirm
 
-      # - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      # Install rustc and cargo
+      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
       - name: Configure CMake
         run: cmake -B build
 
       - name: Build
         shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: cmake --build build --config $BUILD_TYPE
+        run: source $HOME/.cargo/env && cmake --build build --config $BUILD_TYPE
        
   build-ubuntu:
     runs-on: ubuntu-latest
@@ -37,25 +37,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
-
     - name: Install dependencies
-      run: sudo apt install git libssl-dev protobuf-compiler libzmq3-dev g++ cmake python3-distutils python3-dev pkg-config  libcurl4 -y
+      run: sudo apt update && sudo apt install libssl-dev protobuf-compiler libzmq3-dev g++ cmake python3-distutils python3-dev pkg-config  libcurl4 -y
+
+    #    - name: Install latest clang (log fails to compile with clang-10)
+    #      run: bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
     - name: Configure CMake
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
       shell: bash
-      working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: cmake -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
+    # rustc already installed in github action containers
     - name: Build
-      working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake --build . --config $BUILD_TYPE
+      run: cmake --build build --config $BUILD_TYPE
 

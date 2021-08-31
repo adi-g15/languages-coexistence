@@ -16,7 +16,6 @@ CPMAddPackage(
 	GITHUB_REPOSITORY zeromq/cppzmq
 	VERSION 4.7.1
 	GIT_SUBMODULES ""
-	GIT_SUBMODULES_RECURSE OFF
 	OPTIONS "CPPZMQ_BUILD_TESTS OFF"
 	)
 CPMAddPackage("gh:pybind/pybind11@2.7.1")
@@ -35,7 +34,7 @@ target_link_libraries(client argparse pybind11::embed fmt)
 target_link_libraries(server pybind11::embed)
 
 # https://github.com/XiangpengHao/cxx-cmake-example
-option(ENABLE_LTO "Enable cross language linking time optimization" ON)	# When available, use LTO, it almost nulls the 'huge' overhead of FFI between these (see https://github.com/XiangpengHao/cxx-cmake-example for metrics)
+option(ENABLE_LTO "Enable cross language linking time optimization" OFF)	# When available, use LTO, it almost nulls the 'huge' overhead of FFI between these (see https://github.com/XiangpengHao/cxx-cmake-example for metrics)
 
 if(ENABLE_LTO)
 	include(CheckIPOSupported)
