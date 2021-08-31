@@ -14,11 +14,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: hecrj/setup-rust-action@v1.3.4  # Install cargo and rustc
+        with:
+          rust-version: stable
 
       - name: Install dependencies
         run: pacman -Sy git python openssl protobuf zeromq cmake pkg-config curl --noconfirm
 
-      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      # - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
       - name: Configure CMake
         run: cmake -B build

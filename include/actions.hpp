@@ -16,7 +16,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
-#include "rust_cxx_interop.h"
+#include "rust_lib.h"
 
 namespace util {
 	std::vector<uint8_t> get_random_bytes(int n) {

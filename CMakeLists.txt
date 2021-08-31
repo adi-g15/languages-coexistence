@@ -32,7 +32,7 @@ target_link_libraries(client argparse cppcodec)
 # Prepare pybind and python files
 file(COPY "python_lib/lib.py" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(client argparse pybind11::embed fmt)
-target_link_libraries(server argparse pybind11::embed)
+target_link_libraries(server pybind11::embed)
 
 # https://github.com/XiangpengHao/cxx-cmake-example
 option(ENABLE_LTO "Enable cross language linking time optimization" ON)	# When available, use LTO, it almost nulls the 'huge' overhead of FFI between these (see https://github.com/XiangpengHao/cxx-cmake-example for metrics)
@@ -50,14 +50,14 @@ if(ENABLE_LTO)
 endif()
 
 add_subdirectory(c_lib)
-add_subdirectory(rust-cxx-interop)
+add_subdirectory(rust_lib)
 
 message("Cmake build type is ${CMAKE_BUILD_TYPE}")
-include_directories(${CMAKE_BINARY_DIR}/rust-cxx-interop)
+include_directories(${CMAKE_BINARY_DIR}/rust_lib)
 include_directories(include)
 
-target_link_libraries(client c_lib_cert rust_cxx_interop)
-target_link_libraries(server c_lib_cert rust_cxx_interop)
+target_link_libraries(client c_lib_cert rust_lib)
+target_link_libraries(server c_lib_cert rust_lib)
 
 # These additional dependencies need to be linked for the C library or something... or atleast this CMake-Rust to work
 if (WIN32)
@@ -82,12 +82,12 @@ find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 find_package(Threads REQUIRED)
 
 # dlsym symbol not found error, remove this if it fails to find dl (libdl is provided by the GNU C library glibc)
-target_link_libraries(client Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq ${CMAKE_DL_LIBS})
-target_link_libraries(server Threads::Threads OpenSSL::SSL OpenSSL::Crypto cppzmq ${CMAKE_DL_LIBS})
+target_link_libraries(client Threads::Threads OpenSSL::Crypto cppzmq ${CMAKE_DL_LIBS})
+target_link_libraries(server Threads::Threads OpenSSL::Crypto cppzmq ${CMAKE_DL_LIBS})
 
 message("TIP: IF THERE IS LINKER ERROR FOR ssl AND crypto SYMBOLS, INCLUDE THESE ON LINUX, BUT \"\"\"REMOVE FROM WINDOWS\"\"\"...")
-target_link_libraries(client ssl crypto)
-target_link_libraries(server ssl crypto)
+target_link_libraries(client crypto)
+target_link_libraries(server crypto)
 
 # Extras... https://stackanswers.net/questions/best-way-to-portably-set-compiler-options-like-wall-and-pedantic-in-cmake
 include(CheckCXXCompilerFlag)

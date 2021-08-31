@@ -12,12 +12,11 @@
 #include <openssl/engine.h>
 #endif
 
-struct CBytes read_file_to_bytes(const char* filename) {
+struct CBytes read_file_to_bytes(FILE* f) {
     struct CBytes c_bytes;
 
     unsigned char* buffer = 0;
     long length;
-    FILE * f = fopen (filename, "rb");
 
     if (f)
     {
@@ -39,7 +38,7 @@ struct CBytes read_file_to_bytes(const char* filename) {
 }
 
 // https://stackoverflow.com/a/15082282/12339402
-struct CBytes get_certificate(/*const char* name, const char* email_id*/) {
+struct CBytes get_certificate(const char* organisation_name) {
     struct CBytes cert_bytes;
     cert_bytes.bytes = NULL;
     cert_bytes.len = 0;
@@ -82,7 +81,7 @@ struct CBytes get_certificate(/*const char* name, const char* email_id*/) {
      * Then, 'C' - Country Code, 'O' - Organisation, 'CN' - Common Name*/
     X509_NAME *name = X509_get_subject_name(x509_cert);
     X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char *)"IN", -1, -1, 0);
-    X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)"Techy15 AdiG.in", -1, -1, 0);
+    X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)organisation_name, -1, -1, 0);
     X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)"localhost", -1, -1, 0);
 
     X509_set_issuer_name(x509_cert, name);
@@ -93,6 +92,7 @@ struct CBytes get_certificate(/*const char* name, const char* email_id*/) {
     /* Exporting - We export 2 files, .pem (private signature, generally password protected), .cert (the actual certificate) */
     FILE *pem, *cert_file;
     pem = fopen("key.pem", "wb");
+    // FILE* pem = tmpfile();
     PEM_write_PrivateKey(
 	    pem,
 	    pkey,
@@ -103,12 +103,14 @@ struct CBytes get_certificate(/*const char* name, const char* email_id*/) {
 	    NULL	// data to pass to callback
 	);
 
+    // FILE* cert_file = tmpfile();
     cert_file = fopen("cert.pem", "wb");
     PEM_write_X509(
 	    cert_file,
 	    x509_cert);
 
-    cert_bytes = read_file_to_bytes("cert.pem");
+    fflush( cert_file );
+    cert_bytes = read_file_to_bytes( cert_file );
 
     X509_free(x509_cert);
     EVP_PKEY_free(pkey);

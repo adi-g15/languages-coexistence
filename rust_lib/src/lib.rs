@@ -12,7 +12,7 @@ mod ffi {
 pub fn get_msg_hash(message: &String) -> String {
     hex::encode(
         openssl::sha::sha512(message.as_bytes())
-    )[0..6].to_string()
+    ).to_string()
 }
 
 pub fn post_request(request_url: &String, body: &String) -> String {

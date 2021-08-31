@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.13)
 
 project(c_lib_cert C)
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 add_library(${PROJECT_NAME} src/cert.c include/cert.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 

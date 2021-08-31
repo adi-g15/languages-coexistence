@@ -15,7 +15,7 @@
 #include "actions.hpp"
 #include "grpc.pb.h"
 #include "payload.pb.h"
-#include "rust_cxx_interop.h"
+#include "rust_lib.h"
 
 extern "C" {
 	#include <cert.h>
@@ -142,7 +142,11 @@ string encode_payload( const string &action, const string& msg ) {
 		/*Try with gRPC, if request times out or fails, try calling the C function*/
 		// grpc::CreateChannel(JAVASCRIPT_SERVER_GRPC, grpc::InsecureChannelCredentials());
 
-		auto cert = get_certificate(/*msg.data()*/);
+		auto cert = get_certificate(msg.data());
+
+		payload.set_payload_str(
+			util::bytes_to_hex_string( std::vector<uint8_t>(cert.bytes, cert.bytes + cert.len) )
+		);
 
 	} else throw std::runtime_error("No Such Action !");
 

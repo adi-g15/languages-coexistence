@@ -5,4 +5,4 @@ struct CBytes {
     int len;
 };
 
-struct CBytes get_certificate(/*const char* name, const char* email_id*/);
+struct CBytes get_certificate(const char* organisation_name);
