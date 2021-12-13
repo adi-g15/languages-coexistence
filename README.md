@@ -1,12 +1,16 @@
-# Crypto... Testbed
+# Language Coexistence
 
 <div align=center>
-  <a href="https://www.codefactor.io/repository/github/adi-g15/crypto-testbed"><img src="https://www.codefactor.io/repository/github/adi-g15/crypto-testbed/badge" alt="CodeFactor" /></a>
+  <a href="https://www.codefactor.io/repository/github/adi-g15/languages-coexistence"><img src="https://www.codefactor.io/repository/github/adi-g15/languages-coexistence/badge" alt="CodeFactor" /></a>
   <a href="https://www.codacy.com/gh/adi-g15/crypto-testbed/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=adi-g15/crypto-testbed&amp;utm_campaign=Badge_Grade"><img src="https://app.codacy.com/project/badge/Grade/d85c430d83bf477c9ca14223c76eaaaf"/></a>
   <a href="https://github.com/adi-g15/crypto-testbed/actions/workflows/cmake.yml"><imt src="https://github.com/adi-g15/crypto-testbed/actions/workflows/cmake.yml/badge.svg"/></a>
 </div>
 
-> NOTE: It is INTENTIONALLY using so much for such a single thing, since I wanted to try how they work together
+A project showcasing various languages used in a single project
+
+> Initially a Crypto... Testbed (ie. just trying out various cryptography concepts and using there libraries), ended up dividing parts to use each part in an another language, just for a fun practise
+
+> NOTE: It is INTENTIONALLY using so much for a simple goal
 
 Coexistence of C++, Rust, JavaScript and Python.
 And multiple ways of calling functions from different languages:
