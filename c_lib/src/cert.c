@@ -110,6 +110,7 @@ struct CBytes get_certificate(const char* organisation_name) {
 	    x509_cert);
 
     fflush( cert_file );
+    fflush( pem );
     cert_bytes = read_file_to_bytes( cert_file );
 
     X509_free(x509_cert);
